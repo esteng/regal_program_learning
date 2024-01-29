@@ -2,14 +2,14 @@
 - Authors: Elias Stengle-Eskin, Archiki Prasad, Mohit Bansal 
 - [Paper](TODO: arxiv link)
 
-![Figure of the motivation for REGAL](assets/fig1_single.pdf)
+![Figure of the motivation for REGAL](assets/fig1_single.png)
 
 ## Overview
 This repo contains code for our paper: [REGAL: Refactoring Programs to Discover Generalizable Abstractions](TODO: arxiv link). 
 REGAL is a method for learning libraries of interpretable helper functions for program synthesis in a diverse range of tasks. 
 Please see the figure below (and our paper) for more details. 
 
-![Figure of the REGAL method](assets/fig2_method.pdf)
+![Figure of the REGAL method](assets/fig2_method.png)
 
 ## Dependencies 
 Coming soon! 
