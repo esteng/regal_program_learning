@@ -12,13 +12,25 @@ Please see the figure below (and our paper) for more details.
 ![Figure of the REGAL method](assets/fig2_method.png)
 
 ## Dependencies 
-Coming soon! 
+Dependencies can be installed by running 
 
-## Code structure
-Coming soon! 
+```
+pip install -r requirements.txt 
+```
+
+
 
 ## Scripts 
-Coming soon! 
+Scripts for preprocessing ReGAL can be found in `scripts/<domain>/preprocess.sh`.
+These require an `OPENAI_API_KEY` environment variable to be set. 
+
+Scripts for training ReGAL on LOGO and Date can be found in 
+`scripts/<domain>/train_regal.sh` 
+After training, the resulting logs and saved CodeBank files will be in `logs`.
+
+TextCraft: coming soon!
+
+Scripts for evaluation on CodeLlama-13B are in `scripts/<domain>/test_regal.sh`
 
 # Reference
 Please cite our paper as 
