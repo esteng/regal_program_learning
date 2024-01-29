@@ -21,9 +21,17 @@ def sub_nums(s):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image_dir", type=str, required=True, help="path to generated images (obtained from `program_refactoring/domains/logos/generate_programs.py`)") 
-    parser.add_argument("--json_file", type=str, required=True, help="path to the json file containing the programs (obtained from `program_refactoring/domains/logos/convert_programs.py`)")
-    parser.add_argument("--output_dir", type=str, required=True, help="path to directory to save the chromadb files")
+    parser.add_argument("--image_dir", type=str, 
+                        help="path to generated images (obtained from `program_refactoring/domains/logos/generate_programs.py`)",
+                        default="logo_data/images/train_200.jsonl") 
+    parser.add_argument("--json_file", 
+                        type=str, 
+                        help="path to the json file containing the programs (obtained from `program_refactoring/domains/logos/convert_programs.py`)",
+                        default="logo_data/python/train_200.jsonl")
+    parser.add_argument("--output_dir",
+                         type=str, 
+                        help="path to directory to save the chromadb files",
+                        default="logo_data/my_vectordb")
     parser.add_argument("--name", type=str, default="logos") 
     args = parser.parse_args()
 

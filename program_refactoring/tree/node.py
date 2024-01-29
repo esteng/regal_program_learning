@@ -12,7 +12,6 @@ from dataflow.core.lispress import (parse_lispress,
                                     render_pretty)
 
 from program_refactoring.domains.logos.visual_sim import load_img
-from program_refactoring.domains.calflow.utils import Macro, replace_macro, split_macros
 from program_refactoring.headers import LOGO_HEADER
 
 class Node: 
@@ -258,76 +257,3 @@ class LogoNode(Node):
     
 
     
-class LispNode(Node):
-    def __init__(self, 
-                 query, 
-                 program, 
-                 type = "gold",
-                 name = None,
-                 description = None,
-                 metadata = None,
-                 node_id = None,
-                 temp_dir=None,
-                 is_success=False,
-                 is_done=False):
-        super().__init__(query=query, program=program, type=type, name=name, description=description, metadata=metadata, node_id=node_id, is_success=is_success, is_done=is_done)
-        # check to see if it executes 
-        # if not self.is_returning(program.strip()):
-        #     self.exec_program = program
-        # else:
-        if temp_dir is None:
-            self.temp_dir = "temp"
-        else:
-            self.temp_dir = Path(temp_dir)
-        self.exec_program = self.wrap_program(program) 
-
-        self.name = re.sub(" ", "_", self.name)
-
-
-
-
-    def wrap_program(self, program):
-        # do nothing 
-        return program 
-    
-    def execute(self, additional_path: str = None, codebank: str = None):
-        # create a macro dict 
-        # read in the macros 
-        if codebank is None:
-            with open(f"{self.temp_dir}/codebank.lisp") as f1:
-                macros = f1.read()
-        else:
-            macros = codebank
-        # make LUT for macros 
-        macro_dict, __ = split_macros(macros)
-        # parse program
-        parsed = parse_lispress(self.program)
-
-        macros_used = []
-
-        # walk program and replace with macros 
-        def execute_helper(sexp):
-            if type(sexp) != list:
-                return sexp
-            
-            else:
-                # include lower() because of pre-processing needed for grammar, raised the macro functions to uppercase
-                if type(sexp[0]) == str and (sexp[0] in macro_dict.keys() or sexp[0].lower() in macro_dict.keys()):
-                    # is a macro, then replace
-                    sexp[0] = sexp[0].lower()
-                    macros_used.append(sexp[0])
-                    return execute_helper(replace_macro(sexp, macro_dict)[0])
-                else:
-                    # not a macro, add to program as-is  
-                    return [execute_helper(x) for  x in sexp]
-
-        new_parsed = execute_helper(parsed)
-        new_program = render_pretty(new_parsed)
-        if additional_path is not None:
-            with open(additional_path, "w") as f1:
-                f1.write(new_program) 
-
-
-        return new_program, macros_used
-    
-

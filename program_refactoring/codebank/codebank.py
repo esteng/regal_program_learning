@@ -32,7 +32,6 @@ from program_refactoring.domains.logos.utils import make_pass_fail_str as make_l
 from program_refactoring.domains.logos.utils import get_func_names as get_logo_func_names
 from program_refactoring.domains.python.utils import get_func_names as get_python_func_names
 
-from program_refactoring.tree.pair import Pair
 from program_refactoring.codebank.test_case import LogoTestCase, PythonTestCase
 from program_refactoring.codebank.function import Function
 from program_refactoring.headers import LOGO_HEADER, SIMPLE_LOGO_HEADER, PYTHON_HEADER
@@ -708,132 +707,7 @@ Before refactoring, please describe the operations you will perform in the follo
             self._codebank[func]._original_code = code
 
 
-    def deduplicate(self):
-        """remove duplicate functions"""
-        # WIP 
-
-        def parse_dedup_output(output):
-            try:
-                new_funcs = re.search(r"NEW FUNCTIONS:(.*)FUNCTION_MAPPING", output, re.DOTALL).group(1)
-                mapping = re.search(r"FUNCTION_MAPPING:(.*)", output, re.DOTALL).group(1) 
-            except (IndexError, AttributeError) as e:
-                return {}, {}
-            new_funcs, __ = Pair.split_helpers(new_funcs)
-            new_func_objs = []
-            for func_body in new_funcs:
-                # get name 
-                if len(func_body) > 0:
-                    try:
-                        function = Function.from_str(func_body)
-                    except:
-                        pdb.set_trace()
-                    new_func_objs.append(function)
-            
-            map_lut = defaultdict(list)
-            mapping_lines = mapping.split("\n")
-            for line in mapping_lines:
-                if "->" in line:
-                    splitline = re.split("->", line)
-                    old, new = splitline
-                    if old.strip() != new.strip():
-                        map_lut[new.strip()].append(old.strip())
-            return map_lut, {func._name: func for func in new_func_objs}
-
-        def delete_codebank_entry(name):
-            self._codebank = {k:v for k,v in self._codebank.items() if k != name}
-            # remove from the collection 
-            self.collection.delete(ids=[name])
-
-        # for each function, get the most relevant functions 
-        all_new_tcs = {}
-        removed = []
-        added = []
-        done = []
-        codebank_keys = [k for k in self._codebank.keys()]
-        for function in codebank_keys: 
-            if function in done: 
-                continue
-            try:
-                query = self.get(function)._original_code
-            except AttributeError:
-                # function was previously removed
-                assert(self.get(function) is None)
-                continue
-
-            relevant_ids = self.get_relevant(query, k=4)
-            relevant_funcs = [self.get(id) for id in relevant_ids if id is not function]
-
-            if self._codebank[function] is None:
-                print(f"{function} is none")
-                continue
-            func_str = self._codebank[function]._original_code
-            done.append(function)
-            for func in relevant_funcs:
-                if func is None:
-                    continue
-                func_str += "\n" + func._original_code
-                done.append(func)
-
-            # prompt to identify if functions are duplicates 
-            dup_prompt = self.deduplication_prompt.format(functions = func_str)
-            output = self.model(dup_prompt, agent=False)
-            # parse output
-            # if so, propose a merged function 
-            new_func_mapping, new_func_objs = parse_dedup_output(output)
-            for new_func_name, old_func_names in new_func_mapping.items(): 
-                old_accs, new_accs = [], []
-                all_test_cases = []
-                for old_func_name in old_func_names:
-                    func_test_cases = self._codebank[old_func_name].test_cases
-                    old_func_obj = self._codebank[old_func_name]
-                    old_func = self._codebank[old_func_name]._original_code
-                    try:
-                        new_func_obj = new_func_objs[new_func_name]
-                    except KeyError:
-                        continue
-                    new_func = new_func_objs[new_func_name]._original_code
-
-
-                    new_test_cases = []
-                    for tc in func_test_cases: 
-                        test_case_copy_before = copy.deepcopy(tc)
-                        old_acc = test_case_copy_before.get_acc(self.task, overwrites = [old_func_obj])
-                        old_accs.append(old_acc)
-                        test_case_copy_after = copy.deepcopy(tc)
-                        test_case_copy_after.refactor([(old_func, new_func)])
-                        new_test_cases.append(test_case_copy_after)
-                        new_acc = test_case_copy_after.get_acc(self.task, overwrites = [new_func_obj])
-                        # pdb.set_trace()
-                        new_accs.append(new_acc)
-                        all_test_cases.append(test_case_copy_after)
-                # compute mean across all functions the new func is replacing 
-                mean_old_acc = np.mean(old_accs) 
-                mean_new_acc = np.mean(new_accs)
-                logger.info(f"(new) {new_func_name} has success: {mean_new_acc} and (old) {old_func_name} has success: {mean_old_acc}")
-                print(f"(new) {new_func_name} has success: {mean_new_acc} and (old) {old_func_name} has success: {mean_old_acc}")
-
-                if mean_new_acc >= mean_old_acc:
-                    for old_func_name in old_func_names:
-                        try:
-                            old_func_obj = self._codebank[old_func_name]
-                        except KeyError:
-                            continue
-                        old_func = old_func_obj._original_code
-                        print(f"replacing {old_func_name} with {new_func_name}")
-                        print(f"old func:\n{old_func}")
-                        print(f"new func:\n{new_func}")
-                        logger.info(f"replacing {old_func_name} with {new_func_name}")
-                        delete_codebank_entry(old_func_name)
-                        removed.append(old_func_name)
-
-                    # add new func 
-                    added.append(new_func_name)
-                    # update codebank
-                    self.add(new_func, -1)
-                    # update test cases
-                    self._codebank[new_func_name].test_cases = all_test_cases
-
-        pdb.set_trace()
+    
  
 
 

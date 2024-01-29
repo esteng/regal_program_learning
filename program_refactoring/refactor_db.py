@@ -132,23 +132,15 @@ if __name__ == "__main__":
     elif args.task == "python":
         header = PYTHON_HEADER
         simple_header = PYTHON_HEADER
+    else:
+        raise ValueError(f"Unknown task {args.task}")
 
-    elif args.task == "scan":
-        header = PYTHON_HEADER
-        simple_header = PYTHON_HEADER
 
-    elif args.task == "overnight": 
-        header = OVERNIGHT_HEADER
-        simple_header = OVERNIGHT_SIMPLE_HEADER 
-
-    elif args.task == "calflow": 
-        header = ""
-        simple_header = ""
 
     option_str = f"task_{args.task}_dataset_{args.dataset}_refactor_{args.refactor_every}_" + \
                 f"filter_{args.filter_every}_redo_done_{args.redo_done}_comments_"+\
                 f"{args.add_comments}_helpers_second_{args.helpers_second}" 
-    logname = f"ablation_logs/experiment_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M')}_{option_str}.log"
+    logname = f"logs/experiment_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M')}_{option_str}.log"
 
     logging.basicConfig(filename=logname,
                 filemode='a',

@@ -5,13 +5,12 @@ import ast
 import re 
 import logging 
 
-from program_refactoring.tree.node import Node, LogoNode, LispNode, PythonNode, OvernightNode
+from program_refactoring.tree.node import Node, LogoNode, PythonNode
 from program_refactoring.codebank.function import Function
 from program_refactoring.model.model import Model
 from program_refactoring.model.openai_model import OpenAIModel
 from program_refactoring.model.prompts import test_case_refactor_prompt
 from program_refactoring.domains.logos.visual_sim import vis_compare
-from program_refactoring.domains.calflow.utils import check_calflow_acc
 
 
 logger = logging.getLogger(__name__)
@@ -204,54 +203,3 @@ class PythonTestCase(TestCase):
         gold_node = PythonNode.from_json(data['gold_node'])
         # expected = np.array(data['expected'])
         return cls(pred_node, gold_node, model)
-
-
-class OvernightTestCase(TestCase):
-
-    def get_acc(self, task:str, overwrites: List[Function]):
-        # raise NotImplementedError
-        parsed = ast.parse(self.pred_node.exec_program)
-        # pull out import statements and group together 
-        imports, skip = [], []
-        body = []
-        for i, line in enumerate(parsed.body):
-            if isinstance(line, ast.ImportFrom):
-                imports.append(line)
-                skip.append(i)
-            else:
-                body.append(line)
-        overwrite_code = "\n".join([x._original_code for x in overwrites])
-        parsed_overwrite = ast.parse(overwrite_code) 
-        parsed.body = imports + parsed_overwrite.body + body
-        new_exec_program = ast.unparse(parsed)
-        self.pred_node.exec_program = new_exec_program
-
-        try:
-            pred = self.pred_node.execute()
-        except:
-            pred = None
-        gold = self.gold_node.execute()
-        result = gold == pred
-        # pdb.set_trace()
-
-        return result
-
-    @classmethod    
-    def from_json(cls, data):
-        if data is None:
-            # adding this for now so we can use an agent on checkpoints without test cases 
-            return None
-        data['pred_node']['type'] = "pred"
-        data['gold_node']['type'] = "gold"
-        pred_node = OvernightNode.from_json(data["pred_node"])
-        model = OpenAIModel.from_json(data['model'])
-        gold_node = OvernightNode.from_json(data['gold_node'])
-        # expected = np.array(data['expected'])
-        return cls(pred_node, gold_node, model)
-
-    def to_json(self):
-        return {
-            "pred_node": self.pred_node.to_json(),
-            "gold_node": self.gold_node.to_json(),
-            "model": self.model.to_json(),
-        }

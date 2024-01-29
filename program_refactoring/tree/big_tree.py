@@ -15,19 +15,15 @@ from program_refactoring.codebank import CodeBank, LogoTestCase
 from program_refactoring.model.model import Model
 from program_refactoring.headers import SIMPLE_LOGO_HEADER
 from program_refactoring.tree.logo_tuple import LogoTuple
-from program_refactoring.tree.overnight_tuple import OvernightTuple
-from program_refactoring.tree.node import Node, PythonNode, LogoNode, LispNode, OvernightNode
-from program_refactoring.codebank.test_case import LogoTestCase, PythonTestCase, OvernightTestCase
+from program_refactoring.tree.node import Node, PythonNode, LogoNode
+from program_refactoring.codebank.test_case import LogoTestCase, PythonTestCase
 from program_refactoring.codebank.codebank import CodeBank, FUNC_NAME_BY_KEY
 from program_refactoring.tree.python_tuple import PythonTuple
 from program_refactoring.utils import load_from_dir, cluster_embeddings, create_graph
 from program_refactoring.model.prompts import (logo_comment_prompt, 
                                                logo_decompose_prompt,
                                                python_comment_prompt,
-                                               python_decompose_prompt,
-                                               scan_comment_prompt,
-                                               scan_decompose_prompt,
-                                               overnight_comment_prompt) 
+                                               python_decompose_prompt) 
 
 from program_refactoring.domains.logos.visual_sim import vis_compare
 
@@ -255,7 +251,7 @@ class BiggerTree:
         # save node dict
         pickle.dump(self.node_dict, open(log_dir / "node_dict.pkl", "wb"))
         # save codebank
-        ext = "py" if self.task in ["logos", "python", "scan", "overnight"] else "lisp"
+        ext = "py" 
         self.codebank.save(log_dir / f"codebank.{ext}")
 
 
@@ -304,10 +300,7 @@ class BiggerTree:
                 self.graph = pickle.load(f2)
 
             # load codebank 
-            if self.task in ["logos", "python", "scan", "overnight"]: 
-                ext = "py"
-            else:
-                ext = "lisp"
+            ext = "py"
 
             self.codebank = self.codebank.__class__.load(existing_log_dir / f"codebank.{ext}", 
                                                 existing_log_dir / "success_info.json", 

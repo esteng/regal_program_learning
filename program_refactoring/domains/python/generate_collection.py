@@ -21,10 +21,13 @@ def sub_nums(s):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_file", type=str, required=True, help="path to the jsonl file containing the dataset (Faithful-COT/data)")
-    parser.add_argument("--code_file", type=str, required=True, help="path to the jsonl file containing model outputs (Faithful-COT/output_dir)")
-    parser.add_argument("--output_dir", type=str, required=True, help="path to the output directory")
-    parser.add_argument("--name", type=str, required=True, help="name of the dataset")
+    parser.add_argument("--data_file", type=str, help="path to the jsonl file containing the dataset (Faithful-COT/data)", 
+                        default="python_data/date/gpt-3.5-turbo_NL+SL/train_data.jsonl")
+    parser.add_argument("--code_file", type=str, help="path to the jsonl file containing model outputs (Faithful-COT/output_dir)",
+                        default="python_data/date/gpt-3.5-turbo_NL+SL/train_outputs.jsonl")
+    parser.add_argument("--output_dir", type=str, help="path to the output directory",
+                        default="python_data/date/gpt-3.5-turbo_NL+SL/my_vectordb/")
+    parser.add_argument("--name", type=str, help="name of the dataset", default="date")
     args = parser.parse_args()
 
     python_docs, python_ids = [], []
