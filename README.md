@@ -1,5 +1,5 @@
 # REGAL: Refactoring Programs to Discover Generalizable Abstractions 
-- Authors: Elias Stengle-Eskin, Archiki Prasad, Mohit Bansal 
+- Authors: [Elias Stengel-Eskin](https://esteng.github.io), [Archiki Prasad](https://archiki.github.io), [Mohit Bansal](https://www.cs.unc.edu/~mbansal/)
 - [Paper](TODO: arxiv link)
 
 ![Figure of the motivation for REGAL](assets/fig1_single.png)
