@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_dir", type=str, 
                         help="path to generated images (obtained from `program_refactoring/domains/logos/generate_programs.py`)",
-                        default="logo_data/images/train_200.jsonl") 
+                        default="logo_data/images/") 
     parser.add_argument("--json_file", 
                         type=str, 
                         help="path to the json file containing the programs (obtained from `program_refactoring/domains/logos/convert_programs.py`)",

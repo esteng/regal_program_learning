@@ -20,8 +20,6 @@ from program_refactoring.codebank.test_case import TestCase, LogoTestCase, Pytho
 from program_refactoring.domains.python.utils import get_func_names   
 
 from program_refactoring.model.prompts import python_tuple_refactor_prompt, python_self_consistency_prompt
-from program_refactoring.model.prompts import scan_tuple_refactor_prompt
-from program_refactoring.domains.scan.utils import extract_scan_answer
 
 import sys
 sys.path.insert(0, "third_party/Faithful-COT/source")

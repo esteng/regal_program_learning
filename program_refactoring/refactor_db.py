@@ -9,10 +9,9 @@ import datetime
 
 from program_refactoring.utils import load_from_dir
 from program_refactoring.model.openai_model import OpenAIModel
-from program_refactoring.headers import LOGO_HEADER, PYTHON_HEADER, SIMPLE_LOGO_HEADER, OVERNIGHT_HEADER, OVERNIGHT_SIMPLE_HEADER
+from program_refactoring.headers import LOGO_HEADER, PYTHON_HEADER, SIMPLE_LOGO_HEADER
 # from program_refactoring.tree.tree import Tree
 from program_refactoring.tree.big_tree import BiggerTree 
-from program_refactoring.final_loop import gpt_final_loop
 # from program_refactoring.logger import prog_logger
 
 # logger = prog_logger
@@ -117,9 +116,6 @@ if __name__ == "__main__":
     parser.add_argument("--add_comments", action="store_true", help="set to true to comment original code before refactoring")
     parser.add_argument("--use_ascii", action="store_true", help="set to true if using ascii feedback for retry in logos ")
     parser.add_argument("--helpers_second", action="store_true", help="set to true if using helper_second for logos")
-    parser.add_argument("--run_final_loop", action="store_true", help="set to true if you want to take the final curated set of functions and run them over train to collect more test examples")
-    parser.add_argument("--filter_for_final_loop", action="store_true", help="set to true if you want to filter before running final loop") 
-    parser.add_argument("--only_final_loop", action="store_true", help="set to true if you want to only run the final loop")
     parser.add_argument("--no_curriculum", action="store_true", help="set to true to ablate curriculum sorting")
     parser.add_argument("--use_self_consistency", action="store_true", help="set to true to use self-consistency in refactoring")
     parser.add_argument("--self_consistency_width", type=int, default=3)
@@ -148,25 +144,16 @@ if __name__ == "__main__":
                 datefmt='%H:%M:%S',
                 level=logging.INFO)
 
-    if not args.only_final_loop:
-        gpt_resolve(args.collection_path, 
-                    existing_log_dir = args.existing_log_dir, 
-                    filter_every=args.filter_every, 
-                    refactor_every=args.refactor_every,
-                    header=header,
-                    simple_header=simple_header,
-                    pair_cls_key=args.task,
-                    tree_cls_key=args.tree_type,
-                    dataset=args.dataset,
-                    use_modular=args.use_modular,
-                    temp_dir=args.temp_dir,
-                    args=args)
+    gpt_resolve(args.collection_path, 
+                existing_log_dir = args.existing_log_dir, 
+                filter_every=args.filter_every, 
+                refactor_every=args.refactor_every,
+                header=header,
+                simple_header=simple_header,
+                pair_cls_key=args.task,
+                tree_cls_key=args.tree_type,
+                dataset=args.dataset,
+                use_modular=args.use_modular,
+                temp_dir=args.temp_dir,
+                args=args)
     
-    if args.run_final_loop or args.only_final_loop:
-        log_dir = Path(logname).stem
-        gpt_final_loop(log_dir,
-                     do_filter = args.filter_for_final_loop,
-                     pair_cls_key = args.task,
-                     dataset = args.dataset,
-                     temp_dir = args.temp_dir,
-                     args=args)
