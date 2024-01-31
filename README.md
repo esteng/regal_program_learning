@@ -5,7 +5,7 @@
 ![Figure of the motivation for REGAL](assets/fig1_single.png)
 
 ## Overview
-This repo contains code for our paper: [REGAL: Refactoring Programs to Discover Generalizable Abstractions](TODO: arxiv link). 
+This repo contains code for our paper: [REGAL: Refactoring Programs to Discover Generalizable Abstractions](https://arxiv.org/abs/2401.16467) 
 REGAL is a method for learning libraries of interpretable helper functions for program synthesis in a diverse range of tasks. 
 Please see the figure below (and our paper) for more details. 
 
