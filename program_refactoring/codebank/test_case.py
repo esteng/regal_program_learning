@@ -5,7 +5,7 @@ import ast
 import re 
 import logging 
 
-from program_refactoring.tree.node import Node, LogoNode, PythonNode
+from program_refactoring.tree.node import Node, LogoNode, PythonNode, TextCraftNode
 from program_refactoring.codebank.function import Function
 from program_refactoring.model.model import Model
 from program_refactoring.model.openai_model import OpenAIModel
@@ -97,7 +97,52 @@ class TestCase:
         expected = json.get('expected', None)
         return cls(pred_node, gold_node, model, expected)
 
-    
+class TextCraftTestCase(TestCase):
+
+    def get_acc(self, task = "textcraft", overwrites: List[Function] = []):
+        try:
+            parsed = ast.parse(self.pred_node.exec_program)
+        except SyntaxError:
+            return False 
+
+        # pull out import statements and group together 
+        if len(overwrites) > 0:
+            imports, skip = [], []
+            body = []
+            for i, line in enumerate(parsed.body):
+                if isinstance(line, ast.ImportFrom):
+                    imports.append(line)
+                    skip.append(i)
+                else:
+                    body.append(line)
+            overwrite_code = "\n".join([x._original_code for x in overwrites])
+            parsed_overwrite = ast.parse(overwrite_code) 
+            parsed.body = imports + parsed_overwrite.body + body
+            new_exec_program = ast.unparse(parsed)
+            self.pred_node.exec_program = new_exec_program
+
+
+        pred = self.pred_node.execute()
+        gold = self.gold_node.execute()
+        return pred == gold
+
+    def to_json(self):
+        return {
+            "pred_node": self.pred_node.to_json(),
+            "gold_node": self.gold_node.to_json(),
+            "model": self.model.to_json(),
+        }
+
+    @classmethod    
+    def from_json(cls, data):
+        if data is None:
+            return None
+        data['pred_node']['type'] = "pred"
+        data['gold_node']['type'] = "gold"
+        pred_node = TextCraftNode.from_json(data["pred_node"])
+        model = OpenAIModel.from_json(data['model'])
+        gold_node = TextCraftNode.from_json(data['gold_node'])
+        return cls(pred_node, gold_node, model)   
 
 class LogoTestCase(TestCase):
 

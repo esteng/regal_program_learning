@@ -9,7 +9,7 @@ import datetime
 
 from program_refactoring.utils import load_from_dir
 from program_refactoring.model.openai_model import OpenAIModel
-from program_refactoring.headers import LOGO_HEADER, PYTHON_HEADER, SIMPLE_LOGO_HEADER
+from program_refactoring.headers import LOGO_HEADER, PYTHON_HEADER, SIMPLE_LOGO_HEADER, TEXTCRAFT_HEADER
 # from program_refactoring.tree.tree import Tree
 from program_refactoring.tree.big_tree import BiggerTree 
 # from program_refactoring.logger import prog_logger
@@ -86,7 +86,8 @@ def gpt_resolve(logo_collection_path,
                                    header=simple_header,
                                    do_retry=args.do_retry,
                                    redo_done=args.redo_done,
-                                   helpers_first = not args.helpers_second)
+                                   helpers_first = not args.helpers_second,
+                                   craft_retrieve = args.craft_retrieve)
             attempts += 1
             resolved = True
         except:
@@ -116,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--add_comments", action="store_true", help="set to true to comment original code before refactoring")
     parser.add_argument("--use_ascii", action="store_true", help="set to true if using ascii feedback for retry in logos ")
     parser.add_argument("--helpers_second", action="store_true", help="set to true if using helper_second for logos")
+    parser.add_argument("--craft_retrieve", type=bool, default=False, help="")
     parser.add_argument("--no_curriculum", action="store_true", help="set to true to ablate curriculum sorting")
     parser.add_argument("--use_self_consistency", action="store_true", help="set to true to use self-consistency in refactoring")
     parser.add_argument("--self_consistency_width", type=int, default=3)
@@ -124,6 +126,10 @@ if __name__ == "__main__":
     if args.task == "logos":
         header = LOGO_HEADER
         simple_header = SIMPLE_LOGO_HEADER
+    
+    elif args.task == "textcraft":
+        header = TEXTCRAFT_HEADER
+        simple_header = TEXTCRAFT_HEADER
 
     elif args.task == "python":
         header = PYTHON_HEADER

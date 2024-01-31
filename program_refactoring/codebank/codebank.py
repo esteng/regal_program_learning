@@ -20,25 +20,28 @@ from program_refactoring.model.prompts import (logo_codebank_refactor_prompt,
                                                logo_codebank_single_refactor_prompt,
                                                python_codebank_refactor_prompt,
                                                python_codebank_single_refactor_prompt,
+                                               textcraft_codebank_refactor_prompt,
+                                               textcraft_codebank_single_refactor_prompt,
                                                logo_codebank_failure_explanation_prompt,
                                                codebank_deduplication_prompt,
                                                codebank_comment_prompt)
 
 from program_refactoring.model.model import Model
-from program_refactoring.tree.node import LogoNode
+from program_refactoring.tree.node import LogoNode, TextCraftNode
 from program_refactoring.domains.logos.utils import make_pass_fail_str as make_logo_pass_fail_str
 
 
 from program_refactoring.domains.logos.utils import get_func_names as get_logo_func_names
 from program_refactoring.domains.python.utils import get_func_names as get_python_func_names
-
-from program_refactoring.codebank.test_case import LogoTestCase, PythonTestCase
+from program_refactoring.domains.textcraft.utils import get_func_names as get_textcraft_func_names
+from program_refactoring.codebank.test_case import LogoTestCase, PythonTestCase, TextCraftTestCase
 from program_refactoring.codebank.function import Function
-from program_refactoring.headers import LOGO_HEADER, SIMPLE_LOGO_HEADER, PYTHON_HEADER
+from program_refactoring.headers import LOGO_HEADER, SIMPLE_LOGO_HEADER, PYTHON_HEADER, TEXTCRAFT_HEADER
 from program_refactoring.utils import clean_header
 
 FUNC_NAME_BY_KEY = {"logos": get_logo_func_names, 
-                    "python": get_python_func_names} 
+                    "python": get_python_func_names,
+                    "textcraft": get_textcraft_func_names} 
 
 
 logger = logging.getLogger(__name__)
@@ -46,12 +49,14 @@ logger = logging.getLogger(__name__)
 np.random.seed(12)
 
 SINGLE_PROMPTS = {"logos": logo_codebank_single_refactor_prompt,
-                  "python": python_codebank_single_refactor_prompt} 
+                  "python": python_codebank_single_refactor_prompt,
+                  "textcraft": textcraft_codebank_single_refactor_prompt} 
 
 SINGLE_FEEDBACK_PROMPTS = {"logos": logo_codebank_failure_explanation_prompt}
 
 PASS_FAIL_MAKERS = {"logos": make_logo_pass_fail_str,
-                    "python": make_logo_pass_fail_str} 
+                    "python": make_logo_pass_fail_str,
+                    "textcraft": make_logo_pass_fail_str} 
 
 
 class CodeBank:
@@ -89,6 +94,8 @@ class CodeBank:
         # a header added to the codebank file 
         if task == "logos":
             self._header = LOGO_HEADER
+        elif task == "textcraft":
+            self._header = TEXTCRAFT_HEADER
         else:
             self._header = ""
 
