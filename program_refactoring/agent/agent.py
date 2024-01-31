@@ -25,7 +25,7 @@ from program_refactoring.model.llama_prompts import (llama_logo_agent_completion
 from program_refactoring.model.lemur_prompts import (lemur_logo_agent_completion_prompt, 
                                                      lemur_python_agent_completion_prompt) 
 
-from program_refactoring.tree.node import Node, LogoNode, PythonNode, LispNode  
+from program_refactoring.tree.node import Node, LogoNode, PythonNode
 from program_refactoring.domains.logos.utils import clean_import
 from program_refactoring.domains.logos.utils import get_func_names as get_logo_func_names
 from program_refactoring.domains.python.utils import get_func_names as get_python_func_names
