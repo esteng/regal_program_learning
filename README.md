@@ -35,7 +35,7 @@ Scripts for evaluation on CodeLlama-13B are in `scripts/<domain>/test_regal.sh`
 # Reference
 Please cite our paper as 
 ```
-@article{stengeleskin2024regal
+@article{stengeleskin2024regal,
     title = {ReGAL: Refactoring Programs to Discover Generalizable Abstractions},
     author = {Stengel-Eskin, Elias and Prasad, Archiki and Bansal, Mohit}, 
     year = {2024},
