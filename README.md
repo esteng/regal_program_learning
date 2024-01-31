@@ -1,4 +1,7 @@
 # REGAL: Refactoring Programs to Discover Generalizable Abstractions 
+[![Paper page](https://huggingface.co/datasets/huggingface/badges/resolve/main/paper-page-md-dark.svg)](https://huggingface.co/papers/2401.16467)
+
+
 - Authors: [Elias Stengel-Eskin](https://esteng.github.io), [Archiki Prasad](https://archiki.github.io), [Mohit Bansal](https://www.cs.unc.edu/~mbansal/)
 - [Paper](https://arxiv.org/abs/2401.16467) 
 
