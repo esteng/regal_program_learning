@@ -31,11 +31,7 @@ from program_refactoring.model.lemur_prompts import (lemur_logo_agent_completion
                                                      lemur_retrial_prompt,
                                                      lemur_textcraft_agent_completion_prompt) 
 
-<<<<<<< Updated upstream
-from program_refactoring.tree.node import Node, LogoNode, PythonNode
-=======
-from program_refactoring.tree.node import Node, LogoNode, PythonNode, LispNode, TextCraftNode  
->>>>>>> Stashed changes
+from program_refactoring.tree.node import Node, LogoNode, PythonNode, TextCraftNode
 from program_refactoring.domains.logos.utils import clean_import
 from program_refactoring.domains.logos.utils import get_func_names as get_logo_func_names
 from program_refactoring.domains.python.utils import get_func_names as get_python_func_names
@@ -332,7 +328,6 @@ class Agent:
             icl_examples = testcase_examples + train_examples
 
         # produce program
-        pdb.set_trace()
         prompt = self.build_prompt(example, icl_examples)
         output = self.model(prompt, infilling = self.infilling, agent=True, language=self.language, comment_tok = self.comment_tok) 
 

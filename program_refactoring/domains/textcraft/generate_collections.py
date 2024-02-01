@@ -21,9 +21,9 @@ os.environ['OPENAI_API_KEY']
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_file", type=str, required=True, help="path to the jsonl file containing the dataset", default="python_data/textcraft/gpt4/train.json")
-    parser.add_argument("--output_dir", type=str, required=True, help="path to the output directory", default="python_data/textcraft/gpt4/my_chromadb/")
-    parser.add_argument("--name", type=str, required=True, help="name of the dataset", default="textcraft")
+    parser.add_argument("--data_file", type=str, help="path to the jsonl file containing the dataset", default="python_data/textcraft/gpt-4/train.json")
+    parser.add_argument("--output_dir", type=str, help="path to the output directory", default="python_data/textcraft/gpt-4/my_vectordb/")
+    parser.add_argument("--name", type=str, help="name of the dataset", default="textcraft")
     args = parser.parse_args()
 
     python_docs, python_ids = [], []

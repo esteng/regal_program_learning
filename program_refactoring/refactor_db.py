@@ -86,8 +86,9 @@ def gpt_resolve(logo_collection_path,
                                    header=simple_header,
                                    do_retry=args.do_retry,
                                    redo_done=args.redo_done,
-                                   helpers_first = not args.helpers_second,
-                                   craft_retrieve = args.craft_retrieve)
+                                   helpers_first = not args.helpers_second)
+            # ,
+            #                        craft_retrieve = args.craft_retrieve)
             attempts += 1
             resolved = True
         except:

@@ -119,7 +119,7 @@ NEW HELPERS: <code for helper functions or refactored functions>
             logger.info(f"ERROR: could not parse result text: {result_text}")
             return None, {idx: None for idx in nodes_before.keys()}
 
-    def merge(self, codebank, model, done = [], do_retry = True, round_added: int = None, helpers_first: bool = True, craft_retrieve=False):
+    def merge(self, codebank, model, done = [], do_retry = True, round_added: int = None, helpers_first: bool = True, craft_retrieve=False, use_self_consistency = False, self_consistency_width=5):
         """Merge nodes using a merge prompt"""
         logger.info("====================================\n\n")
         logging_filename = logger.manager.root.handlers[0].baseFilename

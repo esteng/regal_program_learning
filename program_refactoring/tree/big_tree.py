@@ -453,8 +453,12 @@ class BiggerTree:
                     description = None
             except KeyError:
                 description = None
-            
-            node = node_cls(query, program, type="gold", description=description, metadata=metadata["metadata"], name=name, node_id=node_id, temp_dir=temp_dir)  
+
+            if "metadata" in metadata:
+                node = node_cls(query, program, type="gold", description=description, metadata=metadata["metadata"], name=name, node_id=node_id, temp_dir=temp_dir)  
+            else:
+                node = node_cls(query, program, type="gold", description=description,  name=name, node_id=node_id, temp_dir=temp_dir)  
+
             node_dict[node_id] = node
 
         return cls(graph, 
