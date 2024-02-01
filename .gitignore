@@ -6,6 +6,9 @@ logo_data/images/*
 */*/*/my_vectordb/*
 */*/my_vectordb/*
 */my_vectordb/*
+*/*vectordb/*
+*/*/*vectordb/*
+*/*/*/*vectordb/*
 
 logs/*
 test_runs/*
