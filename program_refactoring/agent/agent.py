@@ -18,17 +18,28 @@ from program_refactoring.model.model import Model
 from program_refactoring.model.openai_model import OpenAIModel, TokenCounter
 from program_refactoring.model.hf_model import HFModel, CodeLlamaModel, LemurModel
 from program_refactoring.model.prompts import (gpt_logo_agent_prompt, 
-                                               gpt_python_agent_prompt) 
+                                               gpt_python_agent_prompt,
+                                               gpt_textcraft_agent_prompt, 
+                                               gpt_retrial_prompt) 
 from program_refactoring.model.llama_prompts import (llama_logo_agent_completion_prompt, 
-                                                     llama_python_agent_completion_prompt)
+                                                     llama_python_agent_completion_prompt,
+                                                     llama_textcraft_agent_completion_prompt,
+                                                     llama_retrial_prompt)
 
 from program_refactoring.model.lemur_prompts import (lemur_logo_agent_completion_prompt, 
-                                                     lemur_python_agent_completion_prompt) 
+                                                     lemur_python_agent_completion_prompt,
+                                                     lemur_retrial_prompt,
+                                                     lemur_textcraft_agent_completion_prompt) 
 
+<<<<<<< Updated upstream
 from program_refactoring.tree.node import Node, LogoNode, PythonNode
+=======
+from program_refactoring.tree.node import Node, LogoNode, PythonNode, LispNode, TextCraftNode  
+>>>>>>> Stashed changes
 from program_refactoring.domains.logos.utils import clean_import
 from program_refactoring.domains.logos.utils import get_func_names as get_logo_func_names
 from program_refactoring.domains.python.utils import get_func_names as get_python_func_names
+from program_refactoring.domains.textcraft.utils import get_func_names as get_textcraft_func_names
 from program_refactoring.codebank.codebank import CodeBank
 from program_refactoring.paths import LEMUR_PATH
 
@@ -44,23 +55,29 @@ MODEL_DICT = {"gpt-3.5-turbo": OpenAIModel,
 
 
 COMPLETION_PROMPTS = {"llama": {"logos": llama_logo_agent_completion_prompt,
-                                "python": llama_python_agent_completion_prompt},
+                                "python": llama_python_agent_completion_prompt,
+                                "textcraft": llama_textcraft_agent_completion_prompt},
 
                       "lemur": {"logos": lemur_logo_agent_completion_prompt,
-                                "python": lemur_python_agent_completion_prompt},
+                                "python": lemur_python_agent_completion_prompt,
+                                "textcraft": lemur_textcraft_agent_completion_prompt},
 
                       "gpt":   {"logos": gpt_logo_agent_prompt,
-                                "python": gpt_python_agent_prompt}
+                                "python": gpt_python_agent_prompt,
+                                "textcraft": gpt_textcraft_agent_prompt}
                     }
 
-
+RETRIAL_PROMPTS = {"gpt": {"textcraft": gpt_retrial_prompt}, 'llama':{'textcraft': llama_retrial_prompt}, "lemur":{'textcraft': lemur_retrial_prompt}}
 NODE_DICT = {"logos": LogoNode,
-             "python": PythonNode} 
+             "python": PythonNode,
+             "textcraft": TextCraftNode} 
 
 
 class Example:
     def __init__(self, id, query, program = None, provenance = None, expected_answer = None):
         self.id = str(id)
+        if 'textcraft' in self.id:
+            self.idx = self.id.split('_')[-1]
         self.query = query
         self.program = program
         self.provenance  = provenance
@@ -102,6 +119,9 @@ class Agent:
         self.task = task 
         if task == "logos":
             self.get_func_names = get_logo_func_names
+        elif task == "textcraft":
+            self.get_func_names = get_textcraft_func_names
+
         else:
             self.get_func_names = get_python_func_names
         self.dataset = dataset 
@@ -299,7 +319,7 @@ class Agent:
         return self.prompt_builder(example, icl_examples)
 
 
-    def __call__(self, example): 
+    def __call__(self, example, retry=False, craft_retrieve=False): 
         # retrieve example from function examples 
         # then retrieve example from train 
         if len(self.collections) == 1:
@@ -325,6 +345,12 @@ class Agent:
             node =  self.node_cls(example.query, output, type="pred", temp_dir=self.save_path, name=f"{example.id}", node_id=f"{example.id}") 
             fname = self.save_path / f"{example.id}_pred.py"
             result = node.execute(fname)
+            if not result and retry:
+                retry_prompt = RETRIAL_PROMPTS[self.model_type][self.task].format(codebank_str=self.codebank_instr, crafting_commands=example.metadata, query=example.query, program=output, exec_trace=err, succ='False')
+                output = self.model(retry_prompt, infilling = self.infilling, agent=True, language=self.language, comment_tok = self.comment_tok)
+                node =  self.node_cls(example.query, output, type="pred", temp_dir=self.save_path, name=f"{example.id}", node_id=f"{example.id}") 
+                fname = self.save_path / f"{example.id}_pred.py"
+                result = node.execute(fname)
         except SyntaxError:
             result = None
         except AttributeError:
