@@ -1,1 +1,3 @@
 *.pyc
+logo_data/images
+logo_data/images/*
