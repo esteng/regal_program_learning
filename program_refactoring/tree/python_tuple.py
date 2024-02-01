@@ -77,7 +77,7 @@ class PythonTuple(Tuple):
 
         # all_funcs_used = [x for y in functions_used.values() for x in y]
 
-        # NOTE (elias): Moving to retrying individual examples 
+        # NOTE: Moving to retrying individual examples 
         new_helpers = ""
         new_programs = {idx: None for idx in nodes_after.keys()}
         for idx, node_before in nodes_before.items():
@@ -228,7 +228,7 @@ Do not include anything in your output that is not valid Python code. Your progr
             codebank_instr = ""
 
 
-        # NOTE (elias): removed part about removal for now since it didn't help for pairs 
+        # NOTE: removed part about removal for now since it didn't help for pairs 
         queries_and_code = []
         queries_only = []
         if self.task == "scan":

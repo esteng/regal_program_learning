@@ -604,7 +604,7 @@ Before refactoring, please describe the operations you will perform in the follo
 
 
             # get success data
-            # NOTE (elias): right now, not updating success data since the function has changed
+            # NOTE: for now, not updating success data since the function has changed
             # so old success/failure is not as informative 
 
             # update function 

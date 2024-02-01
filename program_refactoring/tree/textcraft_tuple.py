@@ -58,9 +58,6 @@ class TextCraftTuple(Tuple):
         else:
             functions_used_str = ""
 
-        # TODO (elias): Expected here: 
-        # iterate through self.nodes and determine if they failed
-        # only show the failed ones 
 
         prompt_internal_str = ""
         prompt_final_str = ""
@@ -155,7 +152,7 @@ NEW HELPERS: <code for helper functions or refactored functions>
             codebank_instr = ""
 
 
-        # NOTE (elias): removed part about removal for now since it didn't help for pairs 
+        # NOTE: removed part about removal for now since it didn't help for pairs 
         queries_and_code = []
         # answer_format_short = ["HELPER SCRATCHPAD:\nNEW HELPERS:\n"]
         # answer_format_long = ["HELPER SCRATCHPAD:\n# Reproduce existing helper functions that you can use here\nNEW HELPERS:\n# Thoughts:\n# 1. The following functions are shared by multiple programs: <function names>\n<code for helper functions>\n"]

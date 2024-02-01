@@ -60,7 +60,7 @@ def gpt_resolve(logo_collection_path,
                                     use_self_consistency=args.use_self_consistency,
                                     self_consistency_width=args.self_consistency_width) 
     # add header to codebank
-    # TODO (elias): make this part of the tree constructor
+    # TODO: make this part of the tree constructor
     tree.codebank._header = header
 
     resolved = False

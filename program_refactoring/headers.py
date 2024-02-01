@@ -1,9 +1,9 @@
 TEXTCRAFT_HEADER="""import sys
 from typing import List
-sys.path.append("/nas-ssd2/archiki/program_refactoring/third_party/EnvironmentWebs/environments/")
+sys.path.append("third_party/EnvironmentWebs/environments/")
 from textcraft.env import TextCraft
 
-env = TextCraft(minecraft_dir="/nas-ssd2/archiki/program_refactoring/third_party/EnvironmentWebs/environments/textcraft/")
+env = TextCraft(minecraft_dir="third_party/EnvironmentWebs/environments/textcraft/")
 
 global done
 done = False
