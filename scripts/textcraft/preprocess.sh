@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python program_refactoring/domains/textcraft/generate_collection.py
+python program_refactoring/domains/textcraft/generate_collections.py
