@@ -344,7 +344,10 @@ class Agent:
         try:
             node =  self.node_cls(example.query, output, type="pred", temp_dir=self.save_path, name=f"{example.id}", node_id=f"{example.id}") 
             fname = self.save_path / f"{example.id}_pred.py"
-            result = node.execute(fname)
+            if self.task == "textcraft" and retry:
+              result, err = node.execute(fname, verbose=True)
+            else:
+              result = node.execute(fname)
             if not result and retry:
                 retry_prompt = RETRIAL_PROMPTS[self.model_type][self.task].format(codebank_str=self.codebank_instr, crafting_commands=example.metadata, query=example.query, program=output, exec_trace=err, succ='False')
                 output = self.model(retry_prompt, infilling = self.infilling, agent=True, language=self.language, comment_tok = self.comment_tok)
