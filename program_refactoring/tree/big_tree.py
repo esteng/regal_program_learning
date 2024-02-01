@@ -276,7 +276,8 @@ class BiggerTree:
                           round_added=None,
                           do_retry=False, 
                           redo_done=False,
-                          helpers_first=True):
+                          helpers_first=True,
+                          craft_retrieve=False):
         """Recursively resolve and merge all leaf nodes in the tree but with bigger clusters 
         Parameters:
         - existing_log_dir: Path
