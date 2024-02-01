@@ -9,6 +9,7 @@ logo_data/images/*
 */*vectordb/*
 */*/*vectordb/*
 */*/*/*vectordb/*
+*.parquet
 
 logs/*
 test_runs/*
