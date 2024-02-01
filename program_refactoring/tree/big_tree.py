@@ -276,7 +276,8 @@ class BiggerTree:
                           round_added=None,
                           do_retry=False, 
                           redo_done=False,
-                          helpers_first=True):
+                          helpers_first=True,
+                          craft_retrieve=False):
         """Recursively resolve and merge all leaf nodes in the tree but with bigger clusters 
         Parameters:
         - existing_log_dir: Path
@@ -367,6 +368,7 @@ class BiggerTree:
                                                         do_retry = do_retry, 
                                                         round_added = pair_idx, 
                                                         helpers_first = helpers_first,
+                                                        craft_retrieve = creaft_retrieve,
                                                         use_self_consistency = self.use_self_consistency,
                                                         self_consistency_width = self.self_consistency_width)
             # set the left and right done vars 
