@@ -11,35 +11,40 @@ import chromadb
 np.random.seed(12)
 
 from program_refactoring.tree.tuple import Tuple
-from program_refactoring.codebank import CodeBank, LogoTestCase
+from program_refactoring.codebank import CodeBank, LogoTestCase, TextCraftTestCase
 from program_refactoring.model.model import Model
-from program_refactoring.headers import SIMPLE_LOGO_HEADER
+from program_refactoring.headers import SIMPLE_LOGO_HEADER, TEXTCRAFT_HEADER
 from program_refactoring.tree.logo_tuple import LogoTuple
-from program_refactoring.tree.node import Node, PythonNode, LogoNode
+from program_refactoring.tree.node import Node, PythonNode, LogoNode, TextCraftNode
 from program_refactoring.codebank.test_case import LogoTestCase, PythonTestCase
 from program_refactoring.codebank.codebank import CodeBank, FUNC_NAME_BY_KEY
 from program_refactoring.tree.python_tuple import PythonTuple
+from program_refactoring.tree.textcraft_tuple import TextCraftTuple
 from program_refactoring.utils import load_from_dir, cluster_embeddings, create_graph
 from program_refactoring.model.prompts import (logo_comment_prompt, 
                                                logo_decompose_prompt,
                                                python_comment_prompt,
-                                               python_decompose_prompt) 
+                                               python_decompose_prompt,
+                                               textcraft_comment_prompt,
+                                               textcraft_decompose_prompt) 
 
 from program_refactoring.domains.logos.visual_sim import vis_compare
 
 logger = logging.getLogger(__name__)
 
-NODES_BY_KEY = {"python": PythonNode, "logos": LogoNode} 
-TESTCASES_BY_KEY = {"python": PythonTestCase, "logos": LogoTestCase} 
-CODEBANK_BY_KEY = {"python": CodeBank, "logos": CodeBank }
-TUPLES_BY_KEY = {"logos": LogoTuple, "python": PythonTuple }
+NODES_BY_KEY = {"python": PythonNode, "logos": LogoNode, "textcraft": TextCraftNode} 
+TESTCASES_BY_KEY = {"python": PythonTestCase, "logos": LogoTestCase, "textcraft": TextCraftTestCase} 
+CODEBANK_BY_KEY = {"python": CodeBank, "logos": CodeBank, "textcraft": CodeBank }
+TUPLES_BY_KEY = {"logos": LogoTuple, "python": PythonTuple, 'textcraft': TextCraftTuple}
 
 
 COMMENT_PROMPTS_BY_KEY = {"logos": logo_comment_prompt,
-                          "python": python_comment_prompt} 
+                          "python": python_comment_prompt,
+                          "textcraft": textcraft_comment_prompt} 
 
 DECOMPOSE_PROMPTS_BY_KEY = {"logos": logo_decompose_prompt,
-                            "python": python_decompose_prompt} 
+                            "python": python_decompose_prompt,
+                            "textcraft": textcraft_decompose_prompt} 
 
 class BiggerTree:
     def __init__(self, 
@@ -204,7 +209,14 @@ class BiggerTree:
         logger.info(f"Adding comments to programs...")
         for pair_idx, tup in enumerate(tqdm(tuples_and_idxs)): 
             for k, node in tup.nodes.items():
-                filled_decompose_prompt = decompose_prompt.format(query=node.query)
+                if self.task != 'textcraft':
+                    filled_decompose_prompt = decompose_prompt.format(query=node.query)
+                    response = self.model(filled_decompose_prompt)
+                if self.task == 'textcraft':
+                    filled_comment_add_prompt = comment_add_prompt.format(query=node.query, program=node.program)
+
+                else:
+                    filled_decompose_prompt = decompose_prompt.format(query=node.query)
                 response = self.model(filled_decompose_prompt)
 
                 filled_comment_add_prompt = comment_add_prompt.format(query=node.query, program=node.program, decomposed_query=response)
@@ -232,6 +244,8 @@ class BiggerTree:
 
                     if self.task == "logos": 
                         is_correct = vis_compare(result0, result1) == 1.0 
+                    elif self.task == "textcraft":
+                        is_correct = result0 == result1
 
                 if is_correct: 
                     successes += 1
@@ -266,7 +280,8 @@ class BiggerTree:
                           round_added=None,
                           do_retry=False, 
                           redo_done=False,
-                          helpers_first=True):
+                          helpers_first=True,
+                          craft_retrieve=False):
         """Recursively resolve and merge all leaf nodes in the tree but with bigger clusters 
         Parameters:
         - existing_log_dir: Path
@@ -357,6 +372,7 @@ class BiggerTree:
                                                         do_retry = do_retry, 
                                                         round_added = pair_idx, 
                                                         helpers_first = helpers_first,
+                                                        craft_retrieve = craft_retrieve,
                                                         use_self_consistency = self.use_self_consistency,
                                                         self_consistency_width = self.self_consistency_width)
             # set the left and right done vars 
@@ -444,7 +460,12 @@ class BiggerTree:
             except KeyError:
                 description = None
 
-            node = node_cls(query, program, type="gold", description=description, name=name, node_id=node_id, temp_dir=temp_dir)  
+            if 'textcraft' in name:
+                env_idx = name.split('_')[-1]
+                node = node_cls(query, program, type="gold", description=description, metadata=metadata['metadata'], name=name, node_id=node_id, temp_dir=temp_dir)  
+
+            else:
+                node = node_cls(query, program, type="gold", description=description, name=name, node_id=node_id, temp_dir=temp_dir)  
             node_dict[node_id] = node
 
         return cls(graph, 

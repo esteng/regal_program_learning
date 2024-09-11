@@ -13,7 +13,27 @@ Recall that no matter what, your program MUST be formatted in the following fash
 {answer_format_long}
 Try to make your new programs as short as possible by introducing shared helper functions. Helper function parameters should be as general as possible and helper functions should be informatively named."""
 
+textcraft_tuple_refactor_prompt = """Please rewrite the following programs to be more efficient. 
+The code uses the a custom library, similar to the built-in library, which is sufficient for all tasks. 
+Here's a description of the custom library: 
+- check_inventory(): returns the inventory of the agent at the current step
+- get_object(target): obtain target object directly from the environment
+- craft_object(target): using the crafting commands, craft a target object using its ingredients which MUST already be in the inventory. Mention both quantity and exact name, e.g. "2 dark oak logs"
 
+The resulting programs MUST execute exactly the same actions as the original programs.
+Start by writing helper functions that can reduce the size of the code.  
+{codebank_instr}
+
+{queries_and_code}
+
+Please format your answer as:
+{answer_format_short}
+
+Do not include any text that is not valid Python code.
+Recall that no matter what, your program MUST be formatted in the following fashion: 
+{answer_format_long}
+Try to make your new programs as short as possible by introducing shared helper functions that can be re-used across multiple queries. Helper function parameters should be as general as possible and helper functions should be informatively named.
+"""
 
 logo_decompose_prompt = """You are an expert coder. For each query below, decompose it into its parts. 
 Example: 
@@ -29,6 +49,8 @@ Query: {query}
 Query (decomposed):"""
 
 python_decompose_prompt = logo_decompose_prompt
+textcraft_decompose_prompt = python_decompose_prompt
+
 
 logo_comment_prompt = """Please add comments to the following program to explain what each chunk of code does with respect to the query. 
 First, decompose the query into parts. Then comment the code with the query parts. 
@@ -71,6 +93,34 @@ Code:
 
 Query (decomposed):
 {decomposed_query}"""
+
+textcraft_comment_prompt = """Please add comments to the following program to explain what each chunk of code does with respect to the query. 
+First, decompose the query into parts. Then comment the code with the query parts. 
+Example: 
+Query: Do some action 5 times and then do another action
+Code: 
+for i in range(5): 
+    do_some_action()
+do_another_action()
+Commented code:
+# repeat an action 5 times
+for i in range(5): 
+    # do some action
+    do_some_action()
+# do another action
+do_another_action()
+
+Here's a description of the custom library used in the code: 
+- check_inventory(): returns the inventory of the agent at the current step
+- get_object(target): obtain target object directly from the environment
+- craft_object(target): using the crafting commands, craft a target object using its ingredients which MUST already be in the inventory. Mention both quantity and exact name, e.g. "2 dark oak logs"
+
+Do not output any text that is not valid Python code.
+
+Query: {query}
+Code:
+{program}
+"""
 
 python_comment_prompt = """Please add comments to the following program to explain what each chunk of code does with respect to the query. 
 First, decompose the query into parts. Then comment the code with the query parts. 
@@ -133,6 +183,70 @@ Recall that no matter what, your program MUST be formatted in the following fash
 {answer_format_long}
 Try to make your new programs as short as possible by introducing shared helper functions. Helper function parameters should be as general as possible and helper functions should be informatively named.
 If the original function uses `embed`, you will likely need to use `embed` in your version. All code to be repeated needs to be included within the triple quotes passed to embed.
+"""
+
+gpt_textcraft_agent_prompt = """Your task is to craft MineCraft objects in a simplified environment using python programs. 
+You will use a custom library, similar to the built-in library, which is sufficient for all tasks. 
+
+Here's a description of the custom library: 
+- check_inventory(): returns the inventory of the agent at the current step
+- get_object(target): obtain target object directly from the environment
+- craft_object(target): using the crafting commands, craft a target object using its ingredients which MUST already be in the inventory. Mention both quantity and exact name, e.g. "2 dark oak logs"
+{codebank_str}
+
+You will be given a query and have to produce a program. {thought_str} 
+Examples:
+{icl_string}
+
+Please generate ONLY the code to produce the answer and nothing else.
+{crafting_commands}
+Query: {query} 
+{thought_and}Program: 
+"""
+
+gpt_feedback_prompt = """Your task is to craft MineCraft objects in a simplified environment using python programs. 
+You will use a custom library, similar to the built-in library, which is sufficient for all tasks. 
+
+Here's a description of the custom library: 
+- check_inventory(): returns the inventory of the agent at the current step
+- get_object(target): obtain target object directly from the environment
+- craft_object(target): using the crafting commands, craft a target object using its ingredients which MUST already be in the inventory. Mention both quantity and exact name, e.g. "2 dark oak logs"
+{codebank_str}
+
+The following program failed to execute correctly as shown in the execution trace. Based on the execution trace, generate feedback on what went wrong and should be fixed in subsequent attempts. Please generate ONLY the code to produce the answer and nothing else.
+{crafting_commands}
+Query: {query} 
+Generated Program:
+{program}
+Execution Trace:
+{exec_trace}
+Success: {succ}
+Feedback: 
+"""
+
+gpt_retrial_prompt = """Your task is to craft MineCraft objects in a simplified environment using python programs. 
+You will use a custom library, similar to the built-in library, which is sufficient for all tasks. 
+
+Here's a description of the custom library: 
+- check_inventory(): returns the inventory of the agent at the current step
+- get_object(target): obtain target object directly from the environment
+- craft_object(target): using the crafting commands, craft a target object using its ingredients which MUST already be in the inventory. Mention both quantity and exact name, e.g. "2 dark oak logs"
+{codebank_str}
+
+The following program failed to execute correctly as shown in the execution trace. Re-write the program incorporating feedback from the execution trace to ensure it executes correctly. For each re-written program output format your answer as
+```
+# Thought 1: Based on the execution trace, the issue is <explanation>
+# Thought 2: Based on this explanation, I should change <things to change>
+<re-written code>
+```
+{crafting_commands}
+Query: {query} 
+Generated Program:
+{program}
+Execution Trace:
+{exec_trace}
+Success: {succ}
+Re-written Program: 
 """
 
 
@@ -222,6 +336,7 @@ PROGRAMS:
 Think through the problem step-by-step and then give your final answer as a block starting with the words: REWRITTEN PROGRAMS"""
 
 python_codebank_refactor_prompt = logo_codebank_refactor_prompt
+textcraft_codebank_refactor_prompt = logo_codebank_refactor_prompt
 
 
 test_case_refactor_prompt = """The following functions have been changed. Please modify the following program accordingly to use the new function.
@@ -283,6 +398,20 @@ You may also use the following helper functions:
 {codebank_str} 
 {pass_fail_str}
 {modular_str}
+Thoughts:"""
+
+textcraft_codebank_single_refactor_prompt = """Refactor the following function to improve performance. 
+FUNCTION: 
+```
+{func_str}
+```
+You may use the custom library described below: 
+```
+{library_str}
+```
+You may use the following helper functions: 
+{codebank_str} 
+{pass_fail_str}
 Thoughts:"""
 
 python_codebank_single_refactor_prompt = """Refactor the following function to improve performance. 

@@ -13,9 +13,10 @@ from tqdm import tqdm
 import torch 
 
 from program_refactoring.agent.agent import Agent, Example, MODEL_DICT
-from program_refactoring.tree.node import LogoNode
+from program_refactoring.tree.node import LogoNode, TextCraftNode
 from program_refactoring.domains.logos.utils import get_func_names as get_logo_func_names
 from program_refactoring.domains.python.utils import get_func_names as get_python_func_names
+from program_refactoring.domains.textcraft.utils import get_func_names as get_textcraft_func_names
 from program_refactoring.domains.logos.visual_sim import vis_compare, load_img
 from program_refactoring.model.openai_model import OpenAIModel
 from program_refactoring.codebank.codebank import CodeBank
@@ -43,6 +44,9 @@ def read_data_from_logdir(logdir, existing = [], task_type="logos"):
 
     if task_type == "logos":
         get_func_names = get_logo_func_names
+        do_filter = True
+    elif task_type == "textcraft":
+        get_func_names = get_textcraft_func_names
         do_filter = True
     else:
         # NOTE (elias): for now: suspend filtering for python because of imports 
@@ -77,15 +81,16 @@ def read_data_from_json(path, task_name, ids=None):
     for i, line in enumerate(data):
         if ids is not None and 'id' in line.keys() and line['id'] not in ids:
             continue
-
+        if task_name == 'textcraft': idx = f"{task_name}_{line['idx']}"
+        else: idx = f"{task_name}_{i}"
         if "program" in line.keys() and line['program'] is not None:
-            ex = Example(f"{task_name}_{i}", line['language'][0], program = line['program'], provenance = "json")
+            ex = Example(idx, line['language'][0], program = line['program'], provenance = "json")
         else:
             # add an example with the answer already computed (from gold data)
             if "language" in line.keys():
-                ex = Example(f"{task_name}_{i}", line['language'][0], expected_answer = line['answer'], provenance = "json")
+                ex = Example(idx, line['language'][0], expected_answer = line['answer'], provenance = "json")
             elif task_name == "date":
-                ex = Example(f"{task_name}_{i}", line['question'], expected_answer = line['answer'], provenance = "json")
+                ex = Example(idx, line['question'], expected_answer = line['answer'], provenance = "json")
 
         examples.append(ex)
     return examples 
@@ -114,15 +119,29 @@ def rerun_acc_python(example, path):
 def check_acc_all(agent, examples, path, batch_size=5, rerun=False):
     if agent.task == "logos":
         return check_acc_logo(agent, examples, path, batch_size=batch_size, rerun=rerun)
+    elif agent.task == "textcraft":
+        return check_acc_textcraft(agent, examples, path, batch_size=batch_size, rerun=rerun)
     else:
         return check_acc_python(agent, examples, path, batch_size=batch_size, rerun=rerun)
 
 def check_acc(agent, example, path):
     if agent.task == "logos":
         return check_acc_logo_single(agent, example, path)
+    elif agent.task == "textcraft":
+        return check_acc_textcraft_single(agent, example, path)
     else:
         return check_acc_python_single(agent, example, path)
-    
+
+def check_acc_textcraft(agent, examples, path, batch_size, rerun):
+    print('Checking accuracy...')
+    tfs = []
+    pred_progs = []
+    # ignoring batchsize and rerun
+    for example in tqdm(examples):
+        pred_res, pred_prog = agent(example, retry=args.test_retry, craft_retrieve=args.craft_retrieve)
+        tfs.append(pred_res == True)
+        pred_progs.append(pred_prog)
+    return tfs, pred_progs
 
 def check_acc_logo(agent, examples, path, batch_size=5, rerun=False):
     pred_imgs, pred_progs = agent.do_multiple(examples, batch_size, rerun)
@@ -161,7 +180,12 @@ def check_acc_logo_single(agent, example, path):
         return True, pred_prog
     else:
         return False, pred_prog
-    
+
+def check_acc_textcraft_single(agent, example, path):
+    pred_res, pred_prog = agent(example)
+    answer = example.expected_answer
+    return pred_res == answer, pred_prog
+   
 def check_acc_python_single(agent, example, path):
     # check accuracy (without batching)
     pred_res, pred_prog = agent(example)
@@ -208,6 +232,8 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str, required=False, default="gpt-3.5-turbo", help="model name to use")
     parser.add_argument("--task", type=str, required=False, default="logos", help="task to use")
     parser.add_argument("--dataset", type=str, required=False, default="logos", help="task to use")
+    parser.add_argument("--test_retry", type=bool, required=False, default=False, help="retrial at test time")
+    parser.add_argument("--craft_retrieve", type=bool, default=False, help="Use crafting commands in input to retreive codebank functions")
     # parser.add_argument("--codebank_path", type=str, required=False, help="path to generated codebank file", default=None)
     parser.add_argument("--logdir", action="store_true", help="set if loading from a logdir") 
     parser.add_argument("--subset", action="store_true", help="set to take a 10 example subset (first 5 last 5)")
@@ -262,7 +288,7 @@ if __name__ == "__main__":
         model = MODEL_DICT[args.model_name](args.model_name) 
 
 
-    if args.task in ['logos','python'] and (codebank_path/"codebank.py").exists():
+    if args.task in ['logos','python', 'textcraft'] and (codebank_path/"codebank.py").exists():
         pypath = codebank_path / "codebank.py"        
         jsonpath = codebank_path / "success_info.json"
         testcase_path = codebank_path / "test_cases.jsonl"

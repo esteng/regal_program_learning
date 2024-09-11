@@ -45,3 +45,53 @@ Please generate ONLY the code to produce the answer and nothing else.
 [PYTHON]
 # Query: {query}
 # Thought:'''
+
+llama_textcraft_agent_completion_prompt = '''[INST] Your task is to craft MineCraft objects in a simplified environment using python programs. 
+You will use a custom library, similar to the built-in library, which is sufficient for all tasks. 
+
+Here's a description of the custom library: 
+- check_inventory(): returns the inventory of the agent at the current step
+- get_object(target): obtain target object directly from the environment
+- craft_object(target): using the crafting commands, craft a target object using its ingredients which MUST already be in the inventory. Mention both quantity and exact name, e.g. "2 dark oak logs"
+{codebank_str}
+
+You will be given a query and have to produce a program. Begin with a comment that explains your reasoning. For example, you might write
+# Thought: the query asks to get <item>, so I will use the get_object() function. 
+[/INST]
+[PYTHON]
+# Examples:
+{icl_string}
+[/PYTHON]
+[INST]
+Please generate ONLY the code to produce the answer and nothing else.
+[/INST]
+[PYTHON]
+# Query: {query}
+# Thought:'''
+
+llama_retrial_prompt = """[INST] Your task is to craft MineCraft objects in a simplified environment using python programs. 
+You will use a custom library, similar to the built-in library, which is sufficient for all tasks. 
+
+Here's a description of the custom library: 
+- check_inventory(): returns the inventory of the agent at the current step
+- get_object(target): obtain target object directly from the environment
+- craft_object(target): using the crafting commands, craft a target object using its ingredients which MUST already be in the inventory. Mention both quantity and exact name, e.g. "2 dark oak logs"
+{codebank_str}
+
+The following program failed to execute correctly as shown in the execution trace. Re-write the program incorporating feedback from the execution trace to ensure it executes correctly. For each re-written program output format your answer as
+```
+# Thought 1: Based on the execution trace, the issue is <explanation>
+# Thought 2: Based on this explanation, I should change <things to change>
+<re-written code>
+```
+{crafting_commands}
+Query: {query} 
+Generated Program:
+{program}
+Execution Trace:
+{exec_trace}
+Success: {succ}
+[\INST]
+[PYTHON]
+# Re-written Program: 
+"""

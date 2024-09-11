@@ -12,7 +12,7 @@ from dataflow.core.lispress import (parse_lispress,
                                     render_pretty)
 
 from program_refactoring.domains.logos.visual_sim import load_img
-from program_refactoring.headers import LOGO_HEADER
+from program_refactoring.headers import LOGO_HEADER, TEXTCRAFT_HEADER
 
 class Node: 
     def __init__(self, 
@@ -254,6 +254,66 @@ class LogoNode(Node):
         # fname = get_fname(self.exec_program)
 
         return result
+class TextCraftNode(Node):
+    def __init__(self, 
+                 query, 
+                 program, 
+                 type = "gold",
+                 name = None,
+                 description = None,
+                 metadata = None,
+                 node_id = None,
+                 temp_dir=None,
+                 is_success=False,
+                 is_done=False):
+        super().__init__(query=query, program=program, type=type, name=name, description=description, metadata=metadata, node_id=node_id, is_success=is_success, is_done=is_done)
+        self.metadata = metadata
+        self.idx = int(name.split('_')[-1]) 
+        self.target_obj = self.query.split('craft ')[-1].rstrip('.')
+        if temp_dir is None:
+            self.temp_dir = "temp"
+        else:
+            self.temp_dir = Path(temp_dir)
+        self.exec_program = self.wrap_program(program) 
+        self.name = re.sub(" ", "_", self.name)
+
+
+    def wrap_program(self, program): 
+        header = TEXTCRAFT_HEADER
+        temp_dir_safe = re.sub("\/+", ".", str(self.temp_dir)) 
+        env_idx = self.idx
+        if Path(f"{self.temp_dir}/codebank.py").exists():
+            # create an __init__.py file and write codebank
+            with open(f"{self.temp_dir}/__init__.py", "w") as f1:
+                f1.write("\n")
+            program = f"{header}\nfrom {temp_dir_safe}.codebank import *\n\ninit_obs, init_info = env.reset(seed={env_idx})\n\n{program}"
+        else:
+            program = f"{header}\n\ninit_obs, init_info = env.reset(seed={env_idx})\n\n{program}"
+
+        program = f"{program}\nresult = check_inventory()\nprint('RESULT: ', result)"
+        return program
+         
+
+    def execute(self, additional_path=None, verbose=False):
+        """Execute the program to obtain a result"""
+        if additional_path is not None:
+            with open(additional_path, "w") as f1:
+                f1.write(self.exec_program)
+        try:
+            with open(f"{self.temp_dir}/prog_{self.type}.py", "w") as f1:
+                f1.write(self.exec_program)
+            p = subprocess.Popen(["python", f"{self.temp_dir}/prog_{self.type}.py"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            out, errs = p.communicate()
+            out, errs, = out.decode(), errs.decode()
+            out = out.rstrip('\n')
+            result = out.split('\n')[-1].split('RESULT: ')[-1]
+            result = f'[{self.target_obj}]' in result
+        except Exception as e:
+            print(f"Error executing program: {e}")
+            result = None
+        if verbose: return result, out
+        return result
+
     
 
     

@@ -18,17 +18,25 @@ from program_refactoring.model.model import Model
 from program_refactoring.model.openai_model import OpenAIModel, TokenCounter
 from program_refactoring.model.hf_model import HFModel, CodeLlamaModel, LemurModel
 from program_refactoring.model.prompts import (gpt_logo_agent_prompt, 
-                                               gpt_python_agent_prompt) 
+                                               gpt_python_agent_prompt,
+                                               gpt_textcraft_agent_prompt,
+                                               gpt_retrial_prompt,
+                                               gpt_feedback_prompt) 
 from program_refactoring.model.llama_prompts import (llama_logo_agent_completion_prompt, 
-                                                     llama_python_agent_completion_prompt)
+                                                     llama_python_agent_completion_prompt,
+                                                     llama_textcraft_agent_completion_prompt,
+                                                     llama_retrial_prompt)
 
 from program_refactoring.model.lemur_prompts import (lemur_logo_agent_completion_prompt, 
-                                                     lemur_python_agent_completion_prompt) 
+                                                     lemur_python_agent_completion_prompt,
+                                                     lemur_textcraft_agent_completion_prompt,
+                                                     lemur_retrial_prompt) 
 
-from program_refactoring.tree.node import Node, LogoNode, PythonNode
+from program_refactoring.tree.node import Node, LogoNode, PythonNode, TextCraftNode
 from program_refactoring.domains.logos.utils import clean_import
 from program_refactoring.domains.logos.utils import get_func_names as get_logo_func_names
 from program_refactoring.domains.python.utils import get_func_names as get_python_func_names
+from program_refactoring.domains.textcraft.utils import get_func_names as get_textcraft_func_names
 from program_refactoring.codebank.codebank import CodeBank
 from program_refactoring.paths import LEMUR_PATH
 
@@ -44,18 +52,24 @@ MODEL_DICT = {"gpt-3.5-turbo": OpenAIModel,
 
 
 COMPLETION_PROMPTS = {"llama": {"logos": llama_logo_agent_completion_prompt,
-                                "python": llama_python_agent_completion_prompt},
+                                "python": llama_python_agent_completion_prompt,
+                                "textcraft": llama_textcraft_agent_completion_prompt},
 
                       "lemur": {"logos": lemur_logo_agent_completion_prompt,
-                                "python": lemur_python_agent_completion_prompt},
+                                "python": lemur_python_agent_completion_prompt,
+                                "textcraft": lemur_textcraft_agent_completion_prompt},
 
                       "gpt":   {"logos": gpt_logo_agent_prompt,
-                                "python": gpt_python_agent_prompt}
+                                "python": gpt_python_agent_prompt,
+                                "textcraft": gpt_textcraft_agent_prompt}
                     }
 
+RETRIAL_PROMPTS = {"gpt": {"textcraft": gpt_retrial_prompt}, 'llama':{'textcraft': llama_retrial_prompt}, "lemur":{'textcraft': lemur_retrial_prompt}}
+FEEDBACK_PROMPTS = {"gpt": {"textcraft": gpt_feedback_prompt}, 'llama':{"textcraft":''}, 'lemur':{"textcraft":''}}
 
 NODE_DICT = {"logos": LogoNode,
-             "python": PythonNode} 
+             "python": PythonNode,
+             "textcraft": TextCraftNode} 
 
 
 class Example:
@@ -201,7 +215,7 @@ class Agent:
             to_ret = [ex for ex in to_ret if ex.id != example.id]
         return to_ret
 
-    def llama_prompt_builder(self, example, icl_examples):
+    def llama_prompt_builder(self, example, icl_examples, craft_retrieve=False):
         """build prompt for CodeLlama-style models"""
         icl_prompt = ""
         for ex in icl_examples:
@@ -226,7 +240,11 @@ class Agent:
 
         codebank_instr = ""
         if self.codebank is not None:
-            codebank_ids = self.codebank.get_relevant(example.query, k = 20) 
+            if not craft_retrieve:
+                codebank_ids = self.codebank.get_relevant(example.query, k = 20) 
+            else:
+                query = example.metadata + 'Goal: ' + example.query
+                codebank_ids = self.codebank.get_relevant(query, k = 20)
             codebank_funcs = [self.codebank.get(id) for id in codebank_ids]
 
             # codebank_str = [f"{func._name} (description: {re.sub('_', ' ', func._description)})" for func in codebank_funcs if func is not None]
@@ -240,14 +258,19 @@ class Agent:
         llama_agent_prompt = COMPLETION_PROMPTS[self.model_type][self.task]
             # llama_logo_agent_completion_prompt
 
-        prompt = llama_agent_prompt.format(codebank_str = codebank_instr,
+        if not self.task == 'textcraft':
+            prompt = llama_agent_prompt.format(codebank_str = codebank_instr,
                                          icl_string = icl_prompt, 
                                          query = example.query)
-        
+        else:
+            prompt = llama_agent_prompt.format(codebank_str = codebank_instr,
+                                         icl_string = icl_prompt, 
+                                         query = example.query,
+                                         crafting_commands = example.metadata)
         return prompt
 
 
-    def gpt_prompt_builder(self, example, icl_examples): 
+    def gpt_prompt_builder(self, example, icl_examples, craft_retrieve=False): 
         """build prompt for GPT-style models"""
         icl_prompt, thought_and, thought_str = "", "", ""
         for ex in icl_examples:
@@ -273,7 +296,11 @@ class Agent:
 
         codebank_instr = ""
         if self.codebank is not None:
-            codebank_ids = self.codebank.get_relevant(ex.query, k = 10) 
+            if not craft_retrieve:
+                codebank_ids = self.codebank.get_relevant(ex.query, k = 10) 
+            else:
+                query = example.metadata + 'Goal: ' + example.query
+                codebank_ids = self.codebank.get_relevant(query, k = 20) 
             codebank_funcs = [self.codebank.get(id) for id in codebank_ids]
 
             # codebank_str = [f"{func._name} (description: {re.sub('_', ' ', func._description)})" for func in codebank_funcs if func is not None]
@@ -286,20 +313,28 @@ class Agent:
 
         gpt_agent_prompt = COMPLETION_PROMPTS['gpt'][self.task]
         # logo_agent_prompt
-        prompt = gpt_agent_prompt.format(codebank_str = codebank_instr,
+        if not self.task == 'textcraft':
+            prompt = gpt_agent_prompt.format(codebank_str = codebank_instr,
                                          icl_string = icl_prompt, 
                                          query = example.query,
+                                         thought_str = thought_str,
+                                         thought_and = thought_and)
+        else:
+            prompt = gpt_agent_prompt.format(codebank_str = codebank_instr,
+                                         icl_string = icl_prompt, 
+                                         query = example.query,
+                                         crafting_commands = example.metadata,
                                          thought_str = thought_str,
                                          thought_and = thought_and)
 
         return prompt
 
   
-    def build_prompt(self, example, icl_examples):
-        return self.prompt_builder(example, icl_examples)
+    def build_prompt(self, example, icl_examples, craft_retrieve=False):
+        return self.prompt_builder(example, icl_examples, craft_retrieve)
 
 
-    def __call__(self, example): 
+    def __call__(self, example, retry=False, craft_retrieve=False): 
         # retrieve example from function examples 
         # then retrieve example from train 
         if len(self.collections) == 1:
@@ -312,8 +347,8 @@ class Agent:
             icl_examples = testcase_examples + train_examples
 
         # produce program
-        pdb.set_trace()
-        prompt = self.build_prompt(example, icl_examples)
+        # pdb.set_trace()
+        prompt = self.build_prompt(example, icl_examples, craft_retrieve=False)
         output = self.model(prompt, infilling = self.infilling, agent=True, language=self.language, comment_tok = self.comment_tok) 
 
         if type(output) == int:
@@ -325,6 +360,14 @@ class Agent:
             node =  self.node_cls(example.query, output, type="pred", temp_dir=self.save_path, name=f"{example.id}", node_id=f"{example.id}") 
             fname = self.save_path / f"{example.id}_pred.py"
             result = node.execute(fname)
+            if not result and retry:
+                feedback_prompt = FEEDBACK_PROMPTS[self.model_type][self.task].format(codebank_str=self.codebank_instr, crafting_commands=example.metadata, query=example.query, program=output, exec_trace=err, succ='False')
+                retry_prompt = RETRIAL_PROMPTS[self.model_type][self.task].format(codebank_str=self.codebank_instr, crafting_commands=example.metadata, query=example.query, program=output, exec_trace=err, succ='False')
+                output = self.model(retry_prompt, infilling = self.infilling, agent=True, language=self.language, comment_tok = self.comment_tok)
+                node =  self.node_cls(example.query, output, type="pred", temp_dir=self.save_path, name=f"{example.id}", node_id=f"{example.id}") 
+                fname = self.save_path / f"{example.id}_pred.py"
+                result = node.execute(fname)
+
         except SyntaxError:
             result = None
         except AttributeError:

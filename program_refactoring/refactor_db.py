@@ -9,7 +9,7 @@ import datetime
 
 from program_refactoring.utils import load_from_dir
 from program_refactoring.model.openai_model import OpenAIModel
-from program_refactoring.headers import LOGO_HEADER, PYTHON_HEADER, SIMPLE_LOGO_HEADER
+from program_refactoring.headers import LOGO_HEADER, PYTHON_HEADER, SIMPLE_LOGO_HEADER, TEXTCRAFT_HEADER
 # from program_refactoring.tree.tree import Tree
 from program_refactoring.tree.big_tree import BiggerTree 
 # from program_refactoring.logger import prog_logger
@@ -124,6 +124,10 @@ if __name__ == "__main__":
     if args.task == "logos":
         header = LOGO_HEADER
         simple_header = SIMPLE_LOGO_HEADER
+
+    elif args.task == "textcraft":
+        header = TEXTCRAFT_HEADER
+        simple_header = TEXTCRAFT_HEADER
 
     elif args.task == "python":
         header = PYTHON_HEADER
